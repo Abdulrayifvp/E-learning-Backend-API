@@ -17,10 +17,6 @@ module.exports = {
       // Get user input
       const { email, password } = req.body;
 
-      // Validate user input
-      if (!(email && password)) {
-        res.status(400).send("All input is required");
-      }
       // Validate if user exist in our database
       const user = await userSchema.findOne({ email });
 
@@ -39,8 +35,9 @@ module.exports = {
 
         // user
         res.status(200).json(user.token);
+      } else {
+        res.status(401).send("Invalid Credentials");
       }
-      res.status(401).send("Invalid Credentials");
     } catch (err) {
       console.log(err);
     }

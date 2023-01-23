@@ -1,32 +1,32 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const userSchema = require("../models/user.js");
+const instructorSchema = require("../models/instructor");
 
 module.exports = {
   postLogin: async (req, res) => {
     try {
-      // Get user input
+      // Get instructor input
       const { email, password } = req.body;
 
-      // Validate if user exist in our database
-      const user = await userSchema.findOne({ email });
+      // Validate if instructor exist in our database
+      const instructor = await instructorSchema.findOne({ email });
 
-      if (user && (await bcrypt.compare(password, user.password))) {
+      if (instructor && (await bcrypt.compare(password, instructor.password))) {
         // Create token
         const token = jwt.sign(
-          { user_id: user._id, type: "user" },
+          { user_id: instructor._id, type: "instructor" },
           process.env.TOKEN_KEY,
           {
             expiresIn: "2h",
           }
         );
 
-        // save user token
-        user.token = token;
+        // save instructor token
+        instructor.token = token;
 
         // user
-        res.status(200).json(user.token);
+        res.status(200).json(instructor.token);
       } else {
         res.status(401).send("Invalid Credentials");
       }
@@ -36,17 +36,12 @@ module.exports = {
   },
   postRegister: async (req, res) => {
     try {
-      // Get user input
+      // Get instructor input
       const { username, phone, email, password } = req.body;
-
-      // Validate user input
-      if (!(email && password && username && phone)) {
-        res.status(400).send("All input is required");
-      }
 
       // check if user already exist
       // Validate if user exist in our database
-      const oldUser = await userSchema.findOne({ email });
+      const oldUser = await instructorSchema.findOne({ email });
 
       if (oldUser) {
         return res.status(409).send("User Already Exist. Please Login");
@@ -55,8 +50,8 @@ module.exports = {
       //Encrypt user password
       encryptedPassword = await bcrypt.hash(password, 10);
 
-      // Create user in our database
-      const user = await userSchema.create({
+      // Create instructor in our database
+      const instructor = await instructorSchema.create({
         username,
         phone,
         email: email.toLowerCase(),
@@ -65,17 +60,17 @@ module.exports = {
 
       // Create token
       const token = jwt.sign(
-        { user_id: user._id, type: "user" },
+        { user_id: instructor._id, type: "instructor" },
         process.env.TOKEN_KEY,
         {
           expiresIn: "2h",
         }
       );
-      // save user token
-      user.token = token;
+      // save instructor token
+      instructor.token = token;
 
-      // return success
-      res.status(200).json(user.token);
+      // return new instructor success
+      res.status(200).json(instructor.token);
     } catch (err) {
       console.log(err);
     }

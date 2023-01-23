@@ -1,9 +1,10 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const router = express.Router();
+const instructorControls = require("../controllers/instructor");
+const auth = require("../middlewares/authentication.js");
 
-router.get("/", (req, res, next) => {
-  res.send("instructor home");
-});
+router.post("/register", instructorControls.postRegister);
+
+router.post("/login", instructorControls.postLogin);
 
 module.exports = router;

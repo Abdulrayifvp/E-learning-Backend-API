@@ -11,7 +11,6 @@ module.exports = {
 
       // Validate if instructor exist in our database
       const instructor = await instructorSchema.findOne({ email });
-
       if (instructor && (await bcrypt.compare(password, instructor.password))) {
         // Create token
         const token = jwt.sign(

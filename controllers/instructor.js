@@ -19,7 +19,7 @@ module.exports = {
           { user_id: instructor._id, type: 'instructor' },
           process.env.TOKEN_KEY,
           {
-            expiresIn: '2h'
+            expiresIn: '2d'
           }
         )
 
@@ -64,7 +64,7 @@ module.exports = {
         { user_id: instructor._id, type: 'instructor' },
         process.env.TOKEN_KEY,
         {
-          expiresIn: '2h'
+          expiresIn: '2d'
         }
       )
       // save instructor token
@@ -79,13 +79,17 @@ module.exports = {
 
   postAddCourse: async (req, res) => {
     try {
+      // decode Token
+      const token = await jwt.verify(req.body.instructorToken, process.env.TOKEN_KEY)
+
       // create a course
       await courseSchema.create({
         _id: new mongoose.Types.ObjectId(),
+        instructorID: token.user_id,
         title: req.body.title,
         description: req.body.description,
-        thumbnail: req.files.thumbnail[0].filename,
-        previewVideo: req.files.previewVideo[0].filename,
+        thumbnail: process.env.UrlTOPublicFolder + 'thumbnails/' + req.files.thumbnail[0].filename,
+        previewVideo: process.env.UrlTOPublicFolder + 'previewVideos/' + req.files.previewVideo[0].filename,
         level: req.body.level,
         prize: req.body.prize,
         offerPrize: req.body.offerPrize
@@ -94,6 +98,46 @@ module.exports = {
       // success
       res.status(200).json({
         success: true
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+
+  fetchCourse: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1]
+      const decode = await jwt.verify(token, process.env.TOKEN_KEY)
+      courseSchema.find({ instructorID: decode.user_id }).then((courses) => {
+        res.status(200).json(courses.reverse())
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+
+  getCourseById: (req, res, next) => {
+    try {
+      courseSchema.findById(req.params.id).then((course) => {
+        res.status(200).json(course)
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+
+  addModule: async (req, res, next) => {
+    try {
+      const course = await courseSchema.findById(req.params.id)
+      const module = {
+        title: req.body.title,
+        description: req.body.description,
+        note: process.env.UrlTOPublicFolder + 'notes/' + req.files.note[0].filename,
+        moduleVideo: process.env.UrlTOPublicFolder + 'moduleVideos/' + req.files.moduleVideo[0].filename
+      }
+      course.modules.push(module)
+      course.save().then(result => {
+        res.status(200).json({ success: true })
       })
     } catch (err) {
       console.log(err)

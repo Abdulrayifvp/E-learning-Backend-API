@@ -2,10 +2,16 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
 const userSchema = require('../models/user.js')
+const courseSchema = require('../models/course')
+const Razorpay = require('razorpay')
+
+const { validatePaymentVerification } = require('../node_modules/razorpay/dist/utils/razorpay-utils')
+const instance = new Razorpay({ key_id: 'rzp_test_RgCVtBX18ATpsX', key_secret: 'BP4nQyEcQBj7EIWrKHxPfzMY' })
 
 module.exports = {
   postLogin: async (req, res) => {
     try {
+      console.log('ok')
       // Get user input
       const { email, password } = req.body
 
@@ -18,7 +24,7 @@ module.exports = {
           { user_id: user._id, type: 'user' },
           process.env.TOKEN_KEY,
           {
-            expiresIn: '2h'
+            expiresIn: '2d'
           }
         )
 
@@ -68,7 +74,7 @@ module.exports = {
         { user_id: user._id, type: 'user' },
         process.env.TOKEN_KEY,
         {
-          expiresIn: '2h'
+          expiresIn: '2d'
         }
       )
       // save user token
@@ -76,6 +82,84 @@ module.exports = {
 
       // return success
       res.status(200).json(user.token)
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  getAllCourses: (req, res, next) => {
+    try {
+      courseSchema.find().then((courses) => {
+        res.status(200).json(courses.reverse())
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  createOrder: (req, res, next) => {
+    try {
+      instance.orders.create({
+        amount: req.body.amount * 100,
+        currency: 'INR',
+        receipt: 'receipt#1'
+      }).then((result) => {
+        res.status(200).json(result)
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  paymentSuccess: async (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1]
+      const decoded = await jwt.verify(token, process.env.TOKEN_KEY)
+      const paymentResponse = req.body.data
+      const validationStatus = validatePaymentVerification({ order_id: paymentResponse.razorpay_order_id, payment_id: paymentResponse.razorpay_payment_id }, paymentResponse.razorpay_signature, 'BP4nQyEcQBj7EIWrKHxPfzMY')
+      if (validationStatus === true) {
+        const user = await userSchema.findById(decoded.user_id)
+        user.purchasedCourse.push({ courseId: req.body.courseId })
+        user.save().then(() => {
+          res.status(200).json({ status: true })
+        })
+      } else {
+        res.status(400).json({ status: false })
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  getCourseById: (req, res, next) => {
+    try {
+      courseSchema.findById(req.params.id).then((course) => {
+        res.status(200).json(course)
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  getPurchasedCourses: (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1]
+      const decoded = jwt.verify(token, process.env.TOKEN_KEY)
+      userSchema.findById(decoded.user_id).then((result) => {
+        const purchasedCourses = []
+        result.purchasedCourse.forEach((element) => {
+          purchasedCourses.push(element.courseId)
+        })
+        res.status(200).json(purchasedCourses)
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  },
+  getPurchasedCoursesDetailed: (req, res, next) => {
+    try {
+      const token = req.headers.authorization.split(' ')[1]
+      const decoded = jwt.verify(token, process.env.TOKEN_KEY)
+      userSchema.findById(decoded.user_id).populate('purchasedCourse.courseId').then((result) => {
+        const purchasedCourses = []
+        result.purchasedCourse.forEach((course) => purchasedCourses.push(course.courseId))
+        res.status(200).json(purchasedCourses)
+      })
     } catch (err) {
       console.log(err)
     }

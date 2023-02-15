@@ -9,6 +9,8 @@ const cors = require('cors')
 
 // middlewares
 app.use(express.static(path.join(__dirname, 'public')))
+app.use('/public', express.static('public'))
+
 app.use(logger('dev'))
 require('dotenv/config')
 app.use(bodyParser.json())

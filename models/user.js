@@ -1,4 +1,13 @@
 const mongoose = require('mongoose')
+
+const purchasedCourse = new mongoose.Schema({
+  courseId: {
+    type: mongoose.Types.ObjectId,
+    ref: 'course',
+    required: true
+  }
+})
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -16,6 +25,9 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
+  },
+  purchasedCourse: {
+    type: [purchasedCourse]
   },
   token: {
     type: String

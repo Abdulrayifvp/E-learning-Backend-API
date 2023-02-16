@@ -1,6 +1,10 @@
 {
   "devDependencies": {
     "eslint": "^8.32.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.6.1",
+    "eslint-plugin-promise": "^6.1.1",
     "prettier": "^2.8.3"
   },
   "name": "backend",
@@ -75,6 +79,7 @@
     "mongoose": "^6.8.4",
     "morgan": "^1.10.0",
     "ms": "^2.1.2",
+    "multer": "^1.4.5-lts.1",
     "natural-compare": "^1.4.0",
     "nodemon": "^2.0.20",
     "once": "^1.4.0",
@@ -88,6 +93,7 @@
     "prelude-ls": "^1.2.1",
     "punycode": "^2.2.0",
     "queue-microtask": "^1.2.3",
+    "razorpay": "^2.8.4",
     "regexpp": "^3.2.0",
     "resolve-from": "^4.0.0",
     "reusify": "^1.0.4",

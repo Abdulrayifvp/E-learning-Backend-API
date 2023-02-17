@@ -28,7 +28,7 @@ module.exports = {
         // send admin success response
         res.status(200).json(admin.token)
       } else {
-        res.status(401).send('Invalid Credentials')
+        res.status(401).send({ message: 'Invalid Credentials' })
       }
     } catch (err) {
       console.log(err)

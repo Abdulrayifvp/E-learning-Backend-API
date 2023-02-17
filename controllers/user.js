@@ -11,7 +11,6 @@ const instance = new Razorpay({ key_id: 'rzp_test_RgCVtBX18ATpsX', key_secret: '
 module.exports = {
   postLogin: async (req, res) => {
     try {
-      console.log('ok')
       // Get user input
       const { email, password } = req.body
 
@@ -34,7 +33,7 @@ module.exports = {
         // user
         res.status(200).json(user.token)
       } else {
-        res.status(401).send('Invalid Credentials')
+        res.status(400).send({ message: 'Invalid Credentials' })
       }
     } catch (err) {
       console.log(err)
@@ -55,7 +54,7 @@ module.exports = {
       const oldUser = await userSchema.findOne({ email })
 
       if (oldUser) {
-        return res.status(409).send('User Already Exist. Please Login')
+        return res.status(400).send({ message: 'User Already Exist. Please Login' })
       }
 
       // Encrypt user password

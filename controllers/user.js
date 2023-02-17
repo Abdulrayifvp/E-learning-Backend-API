@@ -87,7 +87,7 @@ module.exports = {
   },
   getAllCourses: (req, res, next) => {
     try {
-      courseSchema.find().then((courses) => {
+      courseSchema.find({ adminVerification: 'verified' }).then((courses) => {
         res.status(200).json(courses.reverse())
       })
     } catch (err) {

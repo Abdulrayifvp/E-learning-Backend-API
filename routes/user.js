@@ -9,7 +9,7 @@ router.post('/login', userControls.postLogin)
 
 router.get('/courses/all', userControls.getAllCourses)
 
-router.get('/courses/:id', auth, userControls.getCourseById)
+router.get('/courses/:id', userControls.getCourseById)
 
 router.post('/createOrder', auth, userControls.createOrder)
 

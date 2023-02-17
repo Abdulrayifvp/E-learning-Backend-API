@@ -29,7 +29,7 @@ module.exports = {
         // user
         res.status(200).json(instructor.token)
       } else {
-        res.status(401).send('Invalid Credentials')
+        res.status(401).send({ message: 'Invalid Credentials' })
       }
     } catch (err) {
       console.log(err)
@@ -45,7 +45,7 @@ module.exports = {
       const oldUser = await instructorSchema.findOne({ email })
 
       if (oldUser) {
-        return res.status(409).send('User Already Exist. Please Login')
+        return res.status(409).send({ message: 'User Already Exist. Please Login' })
       }
 
       // Encrypt user password

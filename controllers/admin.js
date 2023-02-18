@@ -5,7 +5,7 @@ const courseSchema = require('../models/course')
 const adminSchema = require('../models/admin')
 
 module.exports = {
-  postLogin: async (req, res) => {
+  postLogin: async (req, res, next) => {
     try {
       // Get admin input
       const { email, password } = req.body
@@ -26,67 +26,79 @@ module.exports = {
         admin.token = token
 
         // send admin success response
-        res.status(200).json(admin.token)
+        res.status(200).json({ token: admin.token, status: true })
       } else {
-        res.status(401).send({ message: 'Invalid Credentials' })
+        res.status(200).json({ status: false, message: 'Invalid Credentials' })
       }
     } catch (err) {
-      console.log(err)
+      next(err)
     }
   },
   getAllCourses: (req, res, next) => {
-    try {
-      courseSchema.find().then((courses) => {
+    courseSchema
+      .find()
+      .then((courses) => {
         res.status(200).json(courses.reverse())
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
   getVerifiedCourses: (req, res, next) => {
-    try {
-      courseSchema.find({ adminVerification: 'verified' }).then((courses) => {
+    courseSchema
+      .find({ adminVerification: 'verified' })
+      .then((courses) => {
         res.status(200).json(courses.reverse())
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
   getVerifingCourses: (req, res, next) => {
-    try {
-      courseSchema.find({ adminVerification: 'verifing' }).then((courses) => {
+    courseSchema
+      .find({ adminVerification: 'verifing' })
+      .then((courses) => {
         res.status(200).json(courses.reverse())
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
   getPendingCourses: (req, res, next) => {
-    try {
-      courseSchema.find({ adminVerification: 'pending' }).then((courses) => {
+    courseSchema
+      .find({ adminVerification: 'pending' })
+      .then((courses) => {
         res.status(200).json(courses.reverse())
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
   getCourseById: (req, res, next) => {
-    try {
-      courseSchema.findById(req.params.id).then((course) => {
-        res.status(200).json(course)
+    courseSchema
+      .findById(req.params.id)
+      .then((course) => {
+        if (course != null) {
+          res.status(200).json(course)
+        } else {
+          res.status(400).json({ error: 'not found' })
+        }
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
 
   changeCourseVerificationStatus: (req, res, next) => {
-    try {
-      courseSchema.findByIdAndUpdate(req.params.id, { adminVerification: req.params.status }).then((result) => {
+    courseSchema
+      .findByIdAndUpdate(req.params.id, {
+        adminVerification: req.params.status
+      })
+      .then((result) => {
         res.status(200)
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   }
 }

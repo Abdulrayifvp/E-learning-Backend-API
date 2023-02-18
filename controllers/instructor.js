@@ -6,7 +6,7 @@ const instructorSchema = require('../models/instructor')
 const courseSchema = require('../models/course')
 
 module.exports = {
-  postLogin: async (req, res) => {
+  postLogin: async (req, res, next) => {
     try {
       // Get instructor input
       const { email, password } = req.body
@@ -27,15 +27,15 @@ module.exports = {
         instructor.token = token
 
         // user
-        res.status(200).json(instructor.token)
+        res.status(200).json({ token: instructor.token, status: true })
       } else {
-        res.status(401).send({ message: 'Invalid Credentials' })
+        res.status(200).json({ status: false, message: 'Invalid Credentials' })
       }
     } catch (err) {
-      console.log(err)
+      next(err)
     }
   },
-  postRegister: async (req, res) => {
+  postRegister: async (req, res, next) => {
     try {
       // Get instructor input
       const { username, phone, email, password } = req.body
@@ -45,7 +45,9 @@ module.exports = {
       const oldUser = await instructorSchema.findOne({ email })
 
       if (oldUser) {
-        return res.status(409).send({ message: 'User Already Exist. Please Login' })
+        return res
+          .status(200)
+          .json({ status: false, message: 'User Already Exist. Please Login' })
       }
 
       // Encrypt user password
@@ -71,16 +73,19 @@ module.exports = {
       instructor.token = token
 
       // return new instructor success
-      res.status(200).json(instructor.token)
+      res.status(200).json({ token: instructor.token, status: true })
     } catch (err) {
-      console.log(err)
+      next(err)
     }
   },
 
-  postAddCourse: async (req, res) => {
+  postAddCourse: async (req, res, next) => {
     try {
       // decode Token
-      const token = await jwt.verify(req.body.instructorToken, process.env.TOKEN_KEY)
+      const token = await jwt.verify(
+        req.body.instructorToken,
+        process.env.TOKEN_KEY
+      )
 
       // create a course
       await courseSchema.create({
@@ -88,8 +93,14 @@ module.exports = {
         instructorID: token.user_id,
         title: req.body.title,
         description: req.body.description,
-        thumbnail: process.env.UrlTOPublicFolder + 'thumbnails/' + req.files.thumbnail[0].filename,
-        previewVideo: process.env.UrlTOPublicFolder + 'previewVideos/' + req.files.previewVideo[0].filename,
+        thumbnail:
+          process.env.UrlTOPublicFolder +
+          'thumbnails/' +
+          req.files.thumbnail[0].filename,
+        previewVideo:
+          process.env.UrlTOPublicFolder +
+          'previewVideos/' +
+          req.files.previewVideo[0].filename,
         level: req.body.level,
         prize: req.body.prize,
         offerPrize: req.body.offerPrize
@@ -100,30 +111,36 @@ module.exports = {
         success: true
       })
     } catch (err) {
-      console.log(err)
+      next(err)
     }
   },
 
   fetchCourse: async (req, res, next) => {
-    try {
-      const token = req.headers.authorization.split(' ')[1]
-      const decode = await jwt.verify(token, process.env.TOKEN_KEY)
-      courseSchema.find({ instructorID: decode.user_id }).then((courses) => {
+    const token = req.headers.authorization.split(' ')[1]
+    const decode = await jwt.verify(token, process.env.TOKEN_KEY)
+    courseSchema
+      .find({ instructorID: decode.user_id })
+      .then((courses) => {
         res.status(200).json(courses.reverse())
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((err) => {
+        next(err)
+      })
   },
 
   getCourseById: (req, res, next) => {
-    try {
-      courseSchema.findById(req.params.id).then((course) => {
-        res.status(200).json(course)
+    courseSchema
+      .findById(req.params.id)
+      .then((course) => {
+        if (course != null) {
+          res.status(200).json(course)
+        } else {
+          res.status(400).json({ error: 'not found' })
+        }
       })
-    } catch (err) {
-      console.log(err)
-    }
+      .catch((error) => {
+        next(error)
+      })
   },
 
   addModule: async (req, res, next) => {
@@ -132,15 +149,24 @@ module.exports = {
       const module = {
         title: req.body.title,
         description: req.body.description,
-        note: process.env.UrlTOPublicFolder + 'notes/' + req.files.note[0].filename,
-        moduleVideo: process.env.UrlTOPublicFolder + 'moduleVideos/' + req.files.moduleVideo[0].filename
+        note:
+          process.env.UrlTOPublicFolder + 'notes/' + req.files.note[0].filename,
+        moduleVideo:
+          process.env.UrlTOPublicFolder +
+          'moduleVideos/' +
+          req.files.moduleVideo[0].filename
       }
       course.modules.push(module)
-      course.save().then(result => {
-        res.status(200).json({ success: true })
-      })
+      course
+        .save()
+        .then((result) => {
+          res.status(200).json({ success: true })
+        })
+        .catch((error) => {
+          next(error)
+        })
     } catch (err) {
-      console.log(err)
+      next(err)
     }
   }
 }

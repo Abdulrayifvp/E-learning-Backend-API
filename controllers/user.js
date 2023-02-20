@@ -131,13 +131,24 @@ module.exports = {
       )
       if (validationStatus === true) {
         const user = await userSchema.findById(decoded.user_id)
+        const course = await courseSchema.findById(req.body.courseId)
         user.purchasedCourse.push({ courseId: req.body.courseId })
         user
           .save()
           .then(() => {
-            res.status(200).json({ status: true })
+            course.subscribers.push({ subscriber: decoded.user_id })
+            course
+              .save()
+              .then(() => {
+                res.status(200).json({ status: true })
+              })
+              .catch((err) => {
+                console.log(err)
+                next(err)
+              })
           })
           .catch((err) => {
+            console.log(err)
             next(err)
           })
       } else {

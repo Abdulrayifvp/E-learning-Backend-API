@@ -142,6 +142,15 @@ module.exports = {
         next(error)
       })
   },
+  getModule: (req, res, next) => {
+    courseSchema.findById(req.params.id).then((result) => {
+      result.modules.forEach((element) => {
+        if (element.id === req.params.moduleId) {
+          res.status(200).json({ element })
+        }
+      })
+    })
+  },
 
   addModule: async (req, res, next) => {
     try {
@@ -168,5 +177,74 @@ module.exports = {
     } catch (err) {
       next(err)
     }
+  },
+  getSubscribers: (req, res, next) => {
+    courseSchema
+      .findById(req.params.id)
+      .populate('subscribers.subscriber')
+      .then((result) => {
+        const subscriber = []
+        result.subscribers.forEach((element) => {
+          const obj = {
+            _id: element.subscriber._id,
+            name: element.subscriber.username,
+            email: element.subscriber.email,
+            phone: element.subscriber.phone
+          }
+          subscriber.push(obj)
+        })
+        res.status(200).json(subscriber)
+      })
+  },
+  editCourse: async (req, res, next) => {
+    const course = await courseSchema.findById(req.params.id)
+    course.title = req.body.title
+    course.description = req.body.description
+    if (req.files.thumbnail) {
+      course.thumbnail =
+        process.env.UrlTOPublicFolder +
+        'thumbnails/' +
+        req.files.thumbnail[0].filename
+    }
+    if (req.files.previewVideo) {
+      course.previewVideo =
+        process.env.UrlTOPublicFolder +
+        'previewVideos/' +
+        req.files.previewVideo[0].filename
+    }
+    course.level = req.body.level
+    course.offerPrize = req.body.offerPrize
+    course.prize = req.body.prize
+    course.modules = JSON.parse(req.body.modules)
+    course
+      .save()
+      .then((result) => {
+        res.status(200).json({ status: true })
+      })
+      .catch((err) => {
+        res.status(200).json({ status: false })
+        next(err)
+      })
+  },
+  editModule: async (req, res, next) => {
+    const course = await courseSchema.findById(req.params.id)
+    const index = course.modules.findIndex(
+      (element) => element.id === req.params.moduleId
+    )
+    course.modules[index].title = req.body.title
+    course.modules[index].description = req.body.description
+    if (req.files.note) {
+      course.modules[index].note =
+        process.env.UrlTOPublicFolder + 'notes/' + req.files.note[0].filename
+    }
+    if (req.files.moduleVideo) {
+      course.modules[index].moduleVideo =
+        process.env.UrlTOPublicFolder +
+        'moduleVideos/' +
+        req.files.moduleVideo[0].filename
+    }
+    course.save().then((result) => {
+      res.status(200).json({ status: true })
+    })
   }
 }

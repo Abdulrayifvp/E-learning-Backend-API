@@ -17,6 +17,10 @@ router.post('/paymentSuccess', auth, userControls.paymentSuccess)
 
 router.get('/purchasedCourses', auth, userControls.getPurchasedCourses)
 
-router.get('/purchasedCoursesDetailed', auth, userControls.getPurchasedCoursesDetailed)
+router.get(
+  '/purchasedCoursesDetailed',
+  auth,
+  userControls.getPurchasedCoursesDetailed
+)
 
 module.exports = router

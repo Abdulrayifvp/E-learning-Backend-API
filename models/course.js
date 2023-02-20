@@ -19,6 +19,10 @@ const moduleSchema = new mongoose.Schema({
   }
 })
 
+const subscriberSchema = new mongoose.Schema({
+  subscriber: { type: mongoose.Types.ObjectId, ref: 'user', required: true }
+})
+
 const courseSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -59,6 +63,9 @@ const courseSchema = new mongoose.Schema({
   adminVerification: {
     type: String,
     default: 'pending'
+  },
+  subscribers: {
+    type: [subscriberSchema]
   }
 })
 
